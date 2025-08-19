@@ -3,11 +3,189 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
     <title>Filter Peserta Purwakarta</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --fg: #111827;
+        --muted: #6b7280;
+        --card: #ffffff;
+        --primary: #2563eb;
+        --primary-600: #1d4ed8;
+        --ring: rgba(37, 99, 235, 0.25);
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+        color: var(--fg);
+        background: var(--bg);
+      }
+      header.site-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .site-header .inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 14px 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .app-title {
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        font-size: 18px;
+      }
+      #root {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      }
+      button {
+        appearance: none;
+        border: 1px solid transparent;
+        color: #ffffff;
+        background: var(--primary);
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.15s ease, filter 0.15s ease;
+      }
+      button:hover { background: var(--primary-600); }
+      button:active { filter: brightness(0.98); }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      input, select, textarea {
+        width: 100%;
+        background: #ffffff;
+        color: var(--fg);
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        padding: 10px 12px;
+        outline: none;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+      }
+      input::placeholder, textarea::placeholder { color: #9ca3af; }
+      input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--ring); }
+      label { display: block; font-weight: 600; margin-bottom: 8px; color: #374151; }
+      .field { margin-bottom: 14px; }
+      .toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #ffffff;
+      }
+      thead th {
+        text-align: left;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.3px;
+        color: #111827;
+        background: #f9fafb;
+      }
+      th, td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; }
+      tbody tr:nth-child(odd) { background: #fafafa; }
+      tbody tr:hover { background: #f3f4f6; }
+      .badge, .chip, .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 10px;
+        font-size: 12px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #1d4ed8;
+        border: 1px solid #c7d2fe;
+      }
+      .card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      }
+      .muted { color: #6b7280; }
+      .spacer { height: 1px; background: #e5e7eb; margin: 16px 0; }
+      @media (max-width: 720px) {
+        #root { margin: 16px; padding: 14px; }
+        .site-header .inner { padding: 12px 16px; }
+        th, td { padding: 10px 12px; }
+      }
+    </style>
   </head>
   <body>
+    <header class="site-header">
+      <div class="inner">
+        <div class="app-title">Filter Peserta Purwakarta</div>
+      </div>
+    </header>
     <div id="root"></div>
     <script src="./app.js"></script>
+    <script>
+      (function () {
+        function computePdfName() {
+          try {
+            var selects = document.querySelectorAll('select');
+            if (!selects || selects.length < 3) return null;
+            var mapelSel = selects[1];
+            var ruangSel = selects[2];
+            var mapel = (mapelSel && mapelSel.value) ? String(mapelSel.value) : '';
+            var ruang = '';
+            if (ruangSel) {
+              var idx = ruangSel.selectedIndex;
+              if (idx >= 0) ruang = String(ruangSel.options[idx].text || '');
+            }
+            var parts = [];
+            if (mapel) parts.push(mapel);
+            if (ruang) parts.push(ruang);
+            var raw = parts.join('_').trim();
+            if (!raw) return null;
+            var safe = raw
+              .replace(/\s+/g, '_')
+              .replace(/[^\w]+/g, '_')
+              .replace(/_+/g, '_')
+              .replace(/^_+|_+$/g, '');
+            return (safe || 'peserta_terfilter') + '.pdf';
+          } catch (e) {
+            return null;
+          }
+        }
+
+        var originalClick = HTMLAnchorElement.prototype.click;
+        HTMLAnchorElement.prototype.click = function () {
+          try {
+            if (this && typeof this.download === 'string' && this.download === 'peserta_terfilter.pdf') {
+              var name = computePdfName();
+              if (name) this.download = name;
+            }
+          } catch (_) {}
+          return originalClick.apply(this, arguments);
+        };
+      })();
+    </script>
   </body>
   </html>
 
